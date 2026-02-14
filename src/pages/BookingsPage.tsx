@@ -306,7 +306,7 @@ export default function BookingsPage() {
                 <Label>Diver *</Label>
                 <Select value={form.diver_id} onValueChange={(v) => setForm({ ...form, diver_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Select diver" /></SelectTrigger>
-                  <SelectContent>{divers.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                    <SelectContent className="z-50">{divers.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
 
@@ -316,7 +316,7 @@ export default function BookingsPage() {
                   <Label>Course</Label>
                   <Select value={form.course_id} onValueChange={(v) => setForm({ ...form, course_id: v })}>
                     <SelectTrigger><SelectValue placeholder="Select course (optional)" /></SelectTrigger>
-                    <SelectContent>{courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name} (${c.price})</SelectItem>)}</SelectContent>
+                      <SelectContent className="z-50">{courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.name} (${c.price})</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               )}
@@ -327,7 +327,7 @@ export default function BookingsPage() {
                   <Label>Group</Label>
                   <Select value={form.group_id} onValueChange={(v) => setForm({ ...form, group_id: v })}>
                     <SelectTrigger><SelectValue placeholder="Select group (optional)" /></SelectTrigger>
-                    <SelectContent>{groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name} ({g.days} days)</SelectItem>)}</SelectContent>
+                    <SelectContent className="z-50">{groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name} ({g.days} days)</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               )}
@@ -336,7 +336,7 @@ export default function BookingsPage() {
                 <Label>Accommodation</Label>
                 <Select value={form.accommodation_id} onValueChange={(v) => setForm({ ...form, accommodation_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Select accommodation (optional)" /></SelectTrigger>
-                  <SelectContent>{accommodations.map((a) => <SelectItem key={a.id} value={a.id}>{a.name} ({a.tier === "free_with_course" ? "Free" : `$${a.price_per_night}/night`})</SelectItem>)}</SelectContent>
+                    <SelectContent className="z-50">{accommodations.map((a) => <SelectItem key={a.id} value={a.id}>{a.name} ({a.tier === "free_with_course" ? "Free" : `$${a.price_per_night}/night`})</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -354,10 +354,10 @@ export default function BookingsPage() {
                   <Label>Payment Status</Label>
                   <Select value={form.payment_status} onValueChange={(v) => setForm({ ...form, payment_status: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unpaid">Unpaid</SelectItem>
-                      <SelectItem value="paid">Paid</SelectItem>
-                    </SelectContent>
+                      <SelectContent className="z-50">
+                        <SelectItem value="unpaid">Unpaid</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                      </SelectContent>
                   </Select>
                 </div>
               )}
@@ -394,7 +394,7 @@ export default function BookingsPage() {
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Add equipment..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-50">
                       {equipmentList.filter(e => e.can_rent).map((eq) => (
                         <SelectItem key={eq.id} value={eq.id}>
                           {eq.name} (${eq.rent_price_per_day}/day)
