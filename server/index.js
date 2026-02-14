@@ -1256,6 +1256,85 @@ app.get('/api/pos/summary', (req, res) => {
   });
 });
 
+// GET /api/rental-assignments - list all rental assignments
+app.get('/api/rental-assignments', (req, res) => {
+  const { booking_id } = req.query;
+  const db = getDb();
+  
+  let query = `
+    SELECT 
+      ra.id, ra.booking_id, ra.equipment_id, ra.quantity, ra.check_in, ra.check_out,
+      ra.status, ra.notes, ra.created_at,
+      e.name as equipment_name, e.category, e.sku, e.rent_price_per_day
+    FROM rental_assignments ra
+    LEFT JOIN equipment e ON ra.equipment_id = e.id
+  `;
+  
+  let params = [];
+  if (booking_id) {
+    query += ' WHERE ra.booking_id = ?';
+    params.push(booking_id);
+  }
+  
+  query += ' ORDER BY ra.created_at DESC';
+  
+  db.all(query, params, (err, assignments) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(assignments || []);
+  });
+});
+
+// POST /api/rental-assignments - create rental assignment
+app.post('/api/rental-assignments', (req, res) => {
+  const { booking_id, equipment_id, quantity, check_in, check_out, notes } = req.body;
+  
+  if (!booking_id || !equipment_id || !check_in || !check_out) {
+    return res.status(400).json({ error: 'booking_id, equipment_id, check_in, and check_out are required' });
+  }
+
+  const db = getDb();
+  const id = uuidv4();
+  
+  db.run(
+    `INSERT INTO rental_assignments (id, booking_id, equipment_id, quantity, check_in, check_out, status, notes)
+     VALUES (?, ?, ?, ?, ?, ?, 'active', ?)`,
+    [id, booking_id, equipment_id, quantity || 1, check_in, check_out, notes || null],
+    (err) => {
+      if (err) {
+        db.close();
+        return res.status(500).json({ error: err.message });
+      }
+      
+      db.get(
+        `SELECT ra.id, ra.booking_id, ra.equipment_id, ra.quantity, ra.check_in, ra.check_out, ra.status, ra.notes, ra.created_at,
+                e.name as equipment_name, e.category, e.sku, e.rent_price_per_day
+         FROM rental_assignments ra
+         LEFT JOIN equipment e ON ra.equipment_id = e.id
+         WHERE ra.id = ?`,
+        [id],
+        (err, assignment) => {
+          db.close();
+          if (err) return res.status(500).json({ error: err.message });
+          res.status(201).json(assignment);
+        }
+      );
+    }
+  );
+});
+
+// DELETE /api/rental-assignments/:id - delete rental assignment
+app.delete('/api/rental-assignments/:id', (req, res) => {
+  const { id } = req.params;
+  const db = getDb();
+  
+  db.run('DELETE FROM rental_assignments WHERE id = ?', [id], (err) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ ok: true });
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

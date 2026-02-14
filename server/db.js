@@ -257,12 +257,32 @@ export function initDb() {
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
         )
+      `);
+
+      // Rental assignments table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS rental_assignments (
+          id TEXT PRIMARY KEY,
+          booking_id TEXT NOT NULL,
+          equipment_id TEXT NOT NULL,
+          quantity INTEGER DEFAULT 1,
+          check_in TEXT NOT NULL,
+          check_out TEXT NOT NULL,
+          status TEXT DEFAULT 'active',
+          notes TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+          FOREIGN KEY(equipment_id) REFERENCES equipment(id) ON DELETE RESTRICT
+        )
       `, (err) => {
-        if (err) reject(err);
-        else resolve();
+        if (err) {
+          db.close();
+          reject(err);
+        } else {
+          db.close();
+          resolve();
+        }
       });
     });
-
-    db.close();
   });
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Edit2, FileText, Download, Printer } from "lucide-react";
+import { Plus, Trash2, Edit2, FileText, Download, Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,34 +10,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/integrations/api/client";
 import { generateInvoicePDF, printInvoice } from "@/utils/invoiceGenerator";
+import { equipment, rentalAssignments } from "@/hooks/usePOS";
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [divers, setDivers] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [accommodations, setAccommodations] = useState<any[]>([]);
+  const [equipmentList, setEquipmentList] = useState<any[]>([]);
   const [stats, setStats] = useState({ booking_count: 0, total_revenue: 0, total_amount: 0 });
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ diver_id: "", course_id: "", accommodation_id: "", check_in: "", check_out: "", payment_status: "unpaid", notes: "" });
+  const [selectedEquipment, setSelectedEquipment] = useState<Array<{ equipment_id: string; quantity: number }>>([]);
+  const [rentalAssignmentsList, setRentalAssignmentsList] = useState<any[]>([]);
   const { toast } = useToast();
 
   const load = async () => {
     setLoading(true);
     try {
-      const [b, d, c, a, s] = await Promise.all([
+      const [b, d, c, a, s, e] = await Promise.all([
         apiClient.bookings.list(),
         apiClient.divers.list(),
         apiClient.courses.list(),
         apiClient.accommodations.list(),
         apiClient.bookings.getLast30Days(),
+        equipment.list(),
       ]);
       setBookings(b);
       setDivers(d);
       setCourses(c);
       setAccommodations(a);
       setStats(s);
+      setEquipmentList(e.data || []);
     } catch (err) {
       console.error('Failed to load bookings', err);
       toast({ title: "Error", description: String(err), variant: "destructive" });
@@ -72,11 +78,23 @@ export default function BookingsPage() {
         payment_status: booking.payment_status || "unpaid",
         notes: booking.notes || "",
       });
+      loadRentalAssignments(booking.id);
     } else {
       setEditingId(null);
       setForm({ diver_id: "", course_id: "", accommodation_id: "", check_in: "", check_out: "", payment_status: "unpaid", notes: "" });
+      setSelectedEquipment([]);
+      setRentalAssignmentsList([]);
     }
     setOpen(true);
+  };
+
+  const loadRentalAssignments = async (bookingId: string) => {
+    try {
+      const { data } = await rentalAssignments.list(bookingId);
+      setRentalAssignmentsList(data || []);
+    } catch (err) {
+      console.error('Failed to load rental assignments', err);
+    }
   };
 
   const handleSubmit = async () => {
@@ -87,6 +105,8 @@ export default function BookingsPage() {
 
     const total = calcTotal();
     try {
+      let bookingId = editingId;
+      
       if (editingId) {
         await apiClient.bookings.update(editingId, {
           diver_id: form.diver_id,
@@ -100,7 +120,7 @@ export default function BookingsPage() {
         });
         toast({ title: "Success", description: "Booking updated successfully" });
       } else {
-        await apiClient.bookings.create({
+        const res = await apiClient.bookings.create({
           diver_id: form.diver_id,
           course_id: form.course_id || null,
           accommodation_id: form.accommodation_id || null,
@@ -109,9 +129,26 @@ export default function BookingsPage() {
           total_amount: total,
           notes: form.notes || null,
         });
+        bookingId = res.id;
         toast({ title: "Success", description: "Booking created successfully" });
       }
+
+      // Save rental assignments
+      if (bookingId && selectedEquipment.length > 0) {
+        for (const eq of selectedEquipment) {
+          await rentalAssignments.create({
+            booking_id: bookingId,
+            equipment_id: eq.equipment_id,
+            quantity: eq.quantity,
+            check_in: form.check_in,
+            check_out: form.check_out,
+          });
+        }
+        toast({ title: "Success", description: `${selectedEquipment.length} equipment items assigned` });
+      }
+
       setOpen(false);
+      setSelectedEquipment([]);
       load();
     } catch (err) {
       toast({ title: "Error", description: String(err), variant: "destructive" });
@@ -274,6 +311,58 @@ export default function BookingsPage() {
                 <Label>Notes</Label>
                 <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               </div>
+
+              {/* Equipment Assignment */}
+              <div className="border-t pt-4">
+                <Label className="text-base font-semibold mb-3 block">Equipment for Check-In</Label>
+                <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
+                  {selectedEquipment.map((sel, idx) => {
+                    const eq = equipmentList.find(e => e.id === sel.equipment_id);
+                    return (
+                      <div key={idx} className="flex items-center justify-between bg-muted/50 p-2 rounded text-sm">
+                        <div className="flex-1">
+                          <p className="font-medium">{eq?.name}</p>
+                          <p className="text-xs text-muted-foreground">${eq?.rent_price_per_day}/day × {sel.quantity}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedEquipment(selectedEquipment.filter((_, i) => i !== idx))}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <Select>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Add equipment..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {equipmentList.filter(e => e.can_rent).map((eq) => (
+                        <SelectItem key={eq.id} value={eq.id}>
+                          {eq.name} (${eq.rent_price_per_day}/day)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      const select = document.querySelector('[role="combobox"]') as HTMLElement;
+                      const value = (select?.getAttribute('data-value') || '');
+                      if (value && !selectedEquipment.find(s => s.equipment_id === value)) {
+                        setSelectedEquipment([...selectedEquipment, { equipment_id: value, quantity: 1 }]);
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+
               <div className="bg-muted/50 rounded-md p-3 text-center">
                 <p className="text-sm text-muted-foreground">Estimated Total</p>
                 <p className="text-2xl font-bold">${calcTotal()}</p>

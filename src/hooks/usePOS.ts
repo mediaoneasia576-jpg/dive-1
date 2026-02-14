@@ -202,6 +202,44 @@ export const pos = {
   },
 };
 
+// Rental assignments
+export const rentalAssignments = {
+  list: async (bookingId?: string) => {
+    const url = bookingId ? `/api/rental-assignments?booking_id=${bookingId}` : '/api/rental-assignments';
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Failed to load rental assignments: ${response.status}`);
+    const data = await response.json();
+    return { data, error: null };
+  },
+
+  create: async (assignment: {
+    booking_id: string;
+    equipment_id: string;
+    quantity: number;
+    check_in: string;
+    check_out: string;
+    notes?: string;
+  }) => {
+    const response = await fetch('/api/rental-assignments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(assignment),
+    });
+    if (!response.ok) throw new Error(`Failed to create rental assignment: ${response.status}`);
+    const data = await response.json();
+    return { data, error: null };
+  },
+
+  delete: async (id: string) => {
+    const response = await fetch(`/api/rental-assignments/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error(`Failed to delete rental assignment: ${response.status}`);
+    const data = await response.json();
+    return { data, error: null };
+  },
+};
+
 // Export functions
 export function exportToCSV(rows: any[], filename = 'export.csv') {
   if (!rows || !rows.length) return;
@@ -236,4 +274,4 @@ export function exportToPDF(title: string, rows: any[], filename = 'export.pdf')
   doc.save(filename);
 }
 
-export default { fetchTopItems, exportToCSV, exportToPDF, equipment, transactions, payments, pos };
+export default { fetchTopItems, exportToCSV, exportToPDF, equipment, transactions, payments, pos, rentalAssignments };
