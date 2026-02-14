@@ -6,11 +6,58 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+interface Diver {
+  id: string;
+  name: string;
+}
+
+interface Course {
+  id: string;
+  name: string;
+  price: number;
+}
+
+interface DiveSite {
+  id: string;
+  name: string;
+  location: string;
+  max_depth: number;
+  difficulty: string;
+}
+
+interface GroupMember {
+  id: string;
+  diver: Diver | null;
+  role: string | null;
+}
+
+interface Group {
+  id: string;
+  name: string;
+  type: 'fundive' | 'course';
+  days: number | null;
+  course: Course | null;
+  leader: Diver | null;
+  members: GroupMember[];
+}
+
+interface ItineraryItem {
+  id: string;
+  group_id: string;
+  day_number: number;
+  dive_site_id: string | null;
+  notes: string | null;
+  site_name: string | null;
+  location: string | null;
+  max_depth: number | null;
+  difficulty: string | null;
+}
+
 export default function GroupsPage() {
   const { groups, loading, error, refresh, createGroup, addMember, removeMember } = useGroups();
-  const [divers, setDivers] = useState<Record<string, unknown>[]>([]);
-  const [courses, setCourses] = useState<Record<string, unknown>[]>([]);
-  const [diveSites, setDiveSites] = useState<Record<string, unknown>[]>([]);
+  const [divers, setDivers] = useState<Diver[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [diveSites, setDiveSites] = useState<DiveSite[]>([]);
   const [name, setName] = useState('');
   const [groupType, setGroupType] = useState<'fundive' | 'course'>('fundive');
   const [leader, setLeader] = useState<string | undefined>(undefined);
@@ -18,7 +65,7 @@ export default function GroupsPage() {
   const [days, setDays] = useState<string>('');
   const [selectedForGroup, setSelectedForGroup] = useState<Record<string, string>>({});
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [itinerary, setItinerary] = useState<Record<string, unknown>[]>([]);
+  const [itinerary, setItinerary] = useState<ItineraryItem[]>([]);
   const [itineraryOpen, setItineraryOpen] = useState(false);
 
   useEffect(() => {
@@ -74,7 +121,7 @@ export default function GroupsPage() {
       type: groupType,
       leader_id: leader ?? null,
       course_id: groupType === 'course' ? selectedCourse : null,
-      days: groupType === 'course' ? (days ? parseInt(days) : null) : null,
+      days: days ? parseInt(days) : null,
     });
     setName('');
     setGroupType('fundive');
@@ -119,37 +166,35 @@ export default function GroupsPage() {
               </select>
             </div>
 
-            {groupType === 'course' && (
-              <>
-                <div>
-                  <label htmlFor="course-select" className="text-sm font-medium">Course</label>
-                  <select
-                    id="course-select"
-                    className="w-full mt-1 px-3 py-2 border rounded"
-                    value={selectedCourse}
-                    onChange={(e) => setSelectedCourse(e.target.value)}
-                  >
-                    <option value="">Select course…</option>
-                    {courses.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} (${c.price})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            <div>
+              <label className="text-sm font-medium">Duration (days)</label>
+              <input
+                className="w-full mt-1 px-3 py-2 border rounded"
+                type="number"
+                min="1"
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                placeholder="e.g., 3"
+              />
+            </div>
 
-                <div>
-                  <label className="text-sm font-medium">Duration (days)</label>
-                  <input
-                    className="w-full mt-1 px-3 py-2 border rounded"
-                    type="number"
-                    min="1"
-                    value={days}
-                    onChange={(e) => setDays(e.target.value)}
-                    placeholder="e.g., 3"
-                  />
-                </div>
-              </>
+            {groupType === 'course' && (
+              <div>
+                <label htmlFor="course-select" className="text-sm font-medium">Course</label>
+                <select
+                  id="course-select"
+                  className="w-full mt-1 px-3 py-2 border rounded"
+                  value={selectedCourse}
+                  onChange={(e) => setSelectedCourse(e.target.value)}
+                >
+                  <option value="">Select course…</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} (${c.price})
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
 
             <div>
@@ -189,21 +234,21 @@ export default function GroupsPage() {
             </div>
           )}
           <div className="space-y-3">
-            {groups.map((g: Record<string, unknown>) => (
-              <div key={g.id} className="p-3 border rounded">
+            {groups.map((g: Group) => (
+              <div key={String(g.id)} className="p-3 border rounded">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex-1">
                     <div className="font-medium">{g.name}</div>
                     <div className="text-sm text-muted-foreground">
                       Type: {g.type === 'course' ? 'Course Group' : 'Fun Dive Group'}
                       {g.type === 'course' && g.course && ` • ${g.course.name}`}
-                      {g.type === 'course' && g.days && ` • ${g.days} days`}
+                      {g.days && ` • ${g.days} days`}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       Leader: {g.leader?.name || '—'}
                     </div>
                   </div>
-                  {g.type === 'course' && g.days && (
+                  {g.days && (
                     <Dialog open={itineraryOpen && selectedGroup === g.id} onOpenChange={setItineraryOpen}>
                       <DialogTrigger asChild>
                         <Button 
@@ -216,12 +261,12 @@ export default function GroupsPage() {
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl">
                         <DialogHeader>
-                          <DialogTitle>Dive Plan: {String(g.name)}</DialogTitle>
+                          <DialogTitle>Dive Plan: {g.name}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
                           {Array.from({ length: numDays }).map((_, dayIdx) => {
                             const dayNum = dayIdx + 1;
-                            const dayPlan = itinerary.find(i => i.day_number === dayNum);
+                            const dayPlan = itinerary.find(i => Number(i.day_number) === dayNum);
                             return (
                               <div key={dayNum} className="p-4 border rounded">
                                 <Label className="font-semibold">Day {dayNum}</Label>
@@ -258,11 +303,11 @@ export default function GroupsPage() {
                 <div className="mt-2">
                   <label className="text-sm font-medium">Members</label>
                   <div className="mt-2 space-y-2">
-                    {(g.members ?? []).length === 0 && (
+                    {(!g.members || g.members.length === 0) && (
                       <div className="text-sm text-muted-foreground">No members</div>
                     )}
-                    {(g.members ?? []).map((m: Record<string, unknown>) => (
-                      <div key={m.id} className="flex items-center justify-between bg-muted p-2 rounded">
+                    {(g.members || []).map((m: GroupMember) => (
+                      <div key={String(m.id)} className="flex items-center justify-between bg-muted p-2 rounded">
                         <div>{m.diver?.name || 'Unknown'}</div>
                         <div className="flex items-center gap-2">
                           <div className="text-sm text-muted-foreground">{m.role || ''}</div>
