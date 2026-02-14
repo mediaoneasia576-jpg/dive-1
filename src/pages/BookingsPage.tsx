@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Edit2, FileText } from "lucide-react";
+import { Plus, Trash2, Edit2, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -150,13 +150,18 @@ export default function BookingsPage() {
           <h1 className="page-title">Bookings & Invoices</h1>
           <p className="page-description">Manage course bookings, accommodations, and payments</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => handleOpenForm()}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Booking
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.open('https://drive.google.com/file/d/1PrpW7MAlWJFAepWbF7ab8SKPd1jlPnY5/view?usp=drive_link', '_blank')}>
+            <Download className="h-4 w-4 mr-2" />
+            Download Booking Form
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => handleOpenForm()}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Booking
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>{editingId ? "Edit Booking" : "New Booking"}</DialogTitle>
@@ -220,6 +225,7 @@ export default function BookingsPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Last 30 Days Stats */}

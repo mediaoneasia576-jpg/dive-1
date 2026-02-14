@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/integrations/api/client";
 import { useToast } from "@/hooks/use-toast";
 
 export default function CoursesPage() {
@@ -18,35 +18,52 @@ export default function CoursesPage() {
   const { toast } = useToast();
 
   const load = async () => {
-    const [c, i, b] = await Promise.all([
-      supabase.from("courses").select("*, instructors(name), boats(name)").order("created_at", { ascending: false }),
-      supabase.from("instructors").select("id, name"),
-      supabase.from("boats").select("id, name"),
-    ]);
-    if (c.data) setCourses(c.data);
-    if (i.data) setInstructors(i.data);
-    if (b.data) setBoats(b.data);
+    try {
+      const [c, i, b] = await Promise.all([
+        apiClient.courses.list(),
+        apiClient.instructors.list(),
+        apiClient.boats.list(),
+      ]);
+      setCourses(c);
+      setInstructors(i);
+      setBoats(b);
+    } catch (err) {
+      toast({ title: "Error", description: String(err), variant: "destructive" });
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   const handleSubmit = async () => {
     if (!form.name) return;
-    const { error } = await supabase.from("courses").insert({
-      name: form.name, description: form.description || null,
-      instructor_id: form.instructor_id || null, boat_id: form.boat_id || null,
-      start_date: form.start_date || null, end_date: form.end_date || null,
-      max_students: Number(form.max_students) || 6, price: Number(form.price) || 0,
-    });
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    setForm({ name: "", description: "", instructor_id: "", boat_id: "", start_date: "", end_date: "", max_students: "6", price: "0" });
-    setOpen(false);
-    load();
+    try {
+      await apiClient.courses.create({
+        name: form.name, 
+        description: form.description || null,
+        instructor_id: form.instructor_id || null, 
+        boat_id: form.boat_id || null,
+        start_date: form.start_date || null, 
+        end_date: form.end_date || null,
+        max_students: Number(form.max_students) || 6, 
+        price: Number(form.price) || 0,
+      });
+      setForm({ name: "", description: "", instructor_id: "", boat_id: "", start_date: "", end_date: "", max_students: "6", price: "0" });
+      setOpen(false);
+      load();
+      toast({ title: "Success", description: "Course created successfully" });
+    } catch (err) {
+      toast({ title: "Error", description: String(err), variant: "destructive" });
+    }
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("courses").delete().eq("id", id);
-    load();
+    try {
+      await apiClient.courses.delete(id);
+      load();
+      toast({ title: "Success", description: "Course deleted successfully" });
+    } catch (err) {
+      toast({ title: "Error", description: String(err), variant: "destructive" });
+    }
   };
 
   return (

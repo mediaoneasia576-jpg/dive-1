@@ -62,6 +62,29 @@ export function initDb() {
         )
       `);
 
+      // Instructors table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS instructors (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT UNIQUE,
+          phone TEXT,
+          certification TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Boats table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS boats (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          capacity INTEGER,
+          location TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
       // Courses table
       db.run(`
         CREATE TABLE IF NOT EXISTS courses (
@@ -70,7 +93,14 @@ export function initDb() {
           price REAL DEFAULT 0,
           duration_days INTEGER,
           description TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          instructor_id TEXT,
+          boat_id TEXT,
+          start_date TEXT,
+          end_date TEXT,
+          max_students INTEGER DEFAULT 6,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(instructor_id) REFERENCES instructors(id) ON DELETE SET NULL,
+          FOREIGN KEY(boat_id) REFERENCES boats(id) ON DELETE SET NULL
         )
       `);
 

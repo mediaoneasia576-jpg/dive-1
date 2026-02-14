@@ -39,6 +39,17 @@ export const apiClient = {
   courses: {
     list: () => apiClient.request('GET', '/api/courses'),
     create: (payload) => apiClient.request('POST', '/api/courses', payload),
+    delete: (id) => apiClient.request('DELETE', `/api/courses/${id}`),
+  },
+
+  instructors: {
+    list: () => apiClient.request('GET', '/api/instructors'),
+    create: (payload) => apiClient.request('POST', '/api/instructors', payload),
+  },
+
+  boats: {
+    list: () => apiClient.request('GET', '/api/boats'),
+    create: (payload) => apiClient.request('POST', '/api/boats', payload),
   },
 
   accommodations: {

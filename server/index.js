@@ -246,16 +246,37 @@ app.post('/api/divers', (req, res) => {
 // GET /api/courses - list all courses
 app.get('/api/courses', (req, res) => {
   const db = getDb();
-  db.all('SELECT id, name, price FROM courses ORDER BY name ASC', (err, courses) => {
+  db.all(`
+    SELECT c.id, c.name, c.price, c.description, c.duration_days, c.start_date, c.end_date, c.max_students,
+           c.instructor_id, i.name as instructor_name,
+           c.boat_id, b.name as boat_name
+    FROM courses c
+    LEFT JOIN instructors i ON c.instructor_id = i.id
+    LEFT JOIN boats b ON c.boat_id = b.id
+    ORDER BY c.created_at DESC
+  `, (err, courses) => {
     db.close();
     if (err) return res.status(500).json({ error: err.message });
-    res.json(courses || []);
+    res.json((courses || []).map(c => ({
+      id: c.id,
+      name: c.name,
+      price: c.price,
+      description: c.description,
+      duration_days: c.duration_days,
+      start_date: c.start_date,
+      end_date: c.end_date,
+      max_students: c.max_students,
+      instructor_id: c.instructor_id,
+      instructors: { name: c.instructor_name },
+      boat_id: c.boat_id,
+      boats: { name: c.boat_name }
+    })));
   });
 });
 
 // POST /api/courses - create a course
 app.post('/api/courses', (req, res) => {
-  const { name, price, duration_days, description } = req.body;
+  const { name, price, duration_days, description, instructor_id, boat_id, start_date, end_date, max_students } = req.body;
   const id = uuidv4();
 
   if (!name) {
@@ -264,17 +285,124 @@ app.post('/api/courses', (req, res) => {
 
   const db = getDb();
   db.run(
-    'INSERT INTO courses (id, name, price, duration_days, description) VALUES (?, ?, ?, ?, ?)',
-    [id, name, price || 0, duration_days || null, description || null],
+    `INSERT INTO courses (id, name, price, duration_days, description, instructor_id, boat_id, start_date, end_date, max_students) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, name, price || 0, duration_days || null, description || null, instructor_id || null, boat_id || null, start_date || null, end_date || null, max_students || 6],
     (err) => {
       if (err) {
         db.close();
         return res.status(500).json({ error: err.message });
       }
-      db.get('SELECT id, name, price FROM courses WHERE id = ?', [id], (err, course) => {
+      db.get(`
+        SELECT c.id, c.name, c.price, c.description, c.duration_days, c.start_date, c.end_date, c.max_students,
+               c.instructor_id, i.name as instructor_name,
+               c.boat_id, b.name as boat_name
+        FROM courses c
+        LEFT JOIN instructors i ON c.instructor_id = i.id
+        LEFT JOIN boats b ON c.boat_id = b.id
+        WHERE c.id = ?
+      `, [id], (err, course) => {
         db.close();
         if (err) return res.status(500).json({ error: err.message });
-        res.json(course);
+        res.json({
+          id: course.id,
+          name: course.name,
+          price: course.price,
+          description: course.description,
+          duration_days: course.duration_days,
+          start_date: course.start_date,
+          end_date: course.end_date,
+          max_students: course.max_students,
+          instructor_id: course.instructor_id,
+          instructors: { name: course.instructor_name },
+          boat_id: course.boat_id,
+          boats: { name: course.boat_name }
+        });
+      });
+    }
+  );
+});
+
+// DELETE /api/courses/:id - delete a course
+app.delete('/api/courses/:id', (req, res) => {
+  const { id } = req.params;
+  const db = getDb();
+  db.run('DELETE FROM courses WHERE id = ?', [id], (err) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ ok: true });
+  });
+});
+
+// GET /api/instructors - list all instructors
+app.get('/api/instructors', (req, res) => {
+  const db = getDb();
+  db.all('SELECT id, name, email, phone, certification FROM instructors ORDER BY name ASC', (err, instructors) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(instructors || []);
+  });
+});
+
+// POST /api/instructors - create an instructor
+app.post('/api/instructors', (req, res) => {
+  const { name, email, phone, certification } = req.body;
+  const id = uuidv4();
+
+  if (!name) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+
+  const db = getDb();
+  db.run(
+    'INSERT INTO instructors (id, name, email, phone, certification) VALUES (?, ?, ?, ?, ?)',
+    [id, name, email || null, phone || null, certification || null],
+    (err) => {
+      if (err) {
+        db.close();
+        return res.status(500).json({ error: err.message });
+      }
+      db.get('SELECT id, name, email, phone, certification FROM instructors WHERE id = ?', [id], (err, instructor) => {
+        db.close();
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(instructor);
+      });
+    }
+  );
+});
+
+// GET /api/boats - list all boats
+app.get('/api/boats', (req, res) => {
+  const db = getDb();
+  db.all('SELECT id, name, capacity, location FROM boats ORDER BY name ASC', (err, boats) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(boats || []);
+  });
+});
+
+// POST /api/boats - create a boat
+app.post('/api/boats', (req, res) => {
+  const { name, capacity, location } = req.body;
+  const id = uuidv4();
+
+  if (!name) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+
+  const db = getDb();
+  db.run(
+    'INSERT INTO boats (id, name, capacity, location) VALUES (?, ?, ?, ?)',
+    [id, name, capacity || null, location || null],
+    (err) => {
+      if (err) {
+        db.close();
+        return res.status(500).json({ error: err.message });
+      }
+      db.get('SELECT id, name, capacity, location FROM boats WHERE id = ?', [id], (err, boat) => {
+        db.close();
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(boat);
       });
     }
   );
@@ -538,7 +666,23 @@ app.put('/api/bookings/:id', (req, res) => {
       `, [id], (err, booking) => {
         db.close();
         if (err) return res.status(500).json({ error: err.message });
-        res.json(booking);
+        res.json({
+          id: booking.id,
+          diver_id: booking.diver_id,
+          course_id: booking.course_id,
+          accommodation_id: booking.accommodation_id,
+          check_in: booking.check_in,
+          check_out: booking.check_out,
+          total_amount: booking.total_amount,
+          invoice_number: booking.invoice_number,
+          payment_status: booking.payment_status,
+          notes: booking.notes,
+          created_at: booking.created_at,
+          updated_at: booking.updated_at,
+          divers: { name: booking.diver_name },
+          courses: { name: booking.course_name, price: booking.course_price },
+          accommodations: { name: booking.accommodation_name, price_per_night: booking.price_per_night, tier: booking.tier }
+        });
       });
     }
   );
