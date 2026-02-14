@@ -31,4 +31,22 @@ export const apiClient = {
     list: () => apiClient.request('GET', '/api/divers'),
     create: (payload) => apiClient.request('POST', '/api/divers', payload),
   },
+
+  courses: {
+    list: () => apiClient.request('GET', '/api/courses'),
+    create: (payload) => apiClient.request('POST', '/api/courses', payload),
+  },
+
+  accommodations: {
+    list: () => apiClient.request('GET', '/api/accommodations'),
+    create: (payload) => apiClient.request('POST', '/api/accommodations', payload),
+  },
+
+  bookings: {
+    list: () => apiClient.request('GET', '/api/bookings'),
+    create: (payload) => apiClient.request('POST', '/api/bookings', payload),
+    getLast30Days: () => apiClient.request('GET', '/api/bookings/stats/last30days'),
+    updateStatus: (id, status) => apiClient.request('PATCH', `/api/bookings/${id}`, { payment_status: status }),
+    delete: (id) => apiClient.request('DELETE', `/api/bookings/${id}`),
+  },
 };

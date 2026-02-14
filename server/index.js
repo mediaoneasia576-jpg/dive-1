@@ -204,6 +204,225 @@ app.post('/api/divers', (req, res) => {
   );
 });
 
+// GET /api/courses - list all courses
+app.get('/api/courses', (req, res) => {
+  const db = getDb();
+  db.all('SELECT id, name, price FROM courses ORDER BY name ASC', (err, courses) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(courses || []);
+  });
+});
+
+// POST /api/courses - create a course
+app.post('/api/courses', (req, res) => {
+  const { name, price, duration_days, description } = req.body;
+  const id = uuidv4();
+
+  if (!name) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+
+  const db = getDb();
+  db.run(
+    'INSERT INTO courses (id, name, price, duration_days, description) VALUES (?, ?, ?, ?, ?)',
+    [id, name, price || 0, duration_days || null, description || null],
+    (err) => {
+      if (err) {
+        db.close();
+        return res.status(500).json({ error: err.message });
+      }
+      db.get('SELECT id, name, price FROM courses WHERE id = ?', [id], (err, course) => {
+        db.close();
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(course);
+      });
+    }
+  );
+});
+
+// GET /api/accommodations - list all accommodations
+app.get('/api/accommodations', (req, res) => {
+  const db = getDb();
+  db.all('SELECT id, name, price_per_night, tier FROM accommodations ORDER BY name ASC', (err, accs) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(accs || []);
+  });
+});
+
+// POST /api/accommodations - create an accommodation
+app.post('/api/accommodations', (req, res) => {
+  const { name, price_per_night, tier, description } = req.body;
+  const id = uuidv4();
+
+  if (!name) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+
+  const db = getDb();
+  db.run(
+    'INSERT INTO accommodations (id, name, price_per_night, tier, description) VALUES (?, ?, ?, ?, ?)',
+    [id, name, price_per_night || 0, tier || 'standard', description || null],
+    (err) => {
+      if (err) {
+        db.close();
+        return res.status(500).json({ error: err.message });
+      }
+      db.get('SELECT id, name, price_per_night, tier FROM accommodations WHERE id = ?', [id], (err, acc) => {
+        db.close();
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(acc);
+      });
+    }
+  );
+});
+
+// GET /api/bookings - list all bookings with related data
+app.get('/api/bookings', (req, res) => {
+  const db = getDb();
+
+  db.all(`
+    SELECT 
+      b.id, b.diver_id, b.course_id, b.accommodation_id, b.check_in, b.check_out,
+      b.total_amount, b.invoice_number, b.payment_status, b.notes, b.created_at,
+      d.name as diver_name,
+      c.name as course_name, c.price as course_price,
+      a.name as accommodation_name, a.price_per_night, a.tier
+    FROM bookings b
+    LEFT JOIN divers d ON b.diver_id = d.id
+    LEFT JOIN courses c ON b.course_id = c.id
+    LEFT JOIN accommodations a ON b.accommodation_id = a.id
+    ORDER BY b.created_at DESC
+  `, (err, bookings) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    
+    const result = (bookings || []).map(b => ({
+      id: b.id,
+      diver_id: b.diver_id,
+      course_id: b.course_id,
+      accommodation_id: b.accommodation_id,
+      check_in: b.check_in,
+      check_out: b.check_out,
+      total_amount: b.total_amount,
+      invoice_number: b.invoice_number,
+      payment_status: b.payment_status,
+      notes: b.notes,
+      created_at: b.created_at,
+      divers: { name: b.diver_name },
+      courses: { name: b.course_name, price: b.course_price },
+      accommodations: { name: b.accommodation_name, price_per_night: b.price_per_night, tier: b.tier }
+    }));
+    res.json(result);
+  });
+});
+
+// GET /api/bookings/stats/last30days - get bookings and revenue for last 30 days
+app.get('/api/bookings/stats/last30days', (req, res) => {
+  const db = getDb();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  db.get(`
+    SELECT 
+      COUNT(*) as booking_count,
+      SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as total_revenue,
+      SUM(total_amount) as total_amount
+    FROM bookings
+    WHERE created_at >= ?
+  `, [thirtyDaysAgo], (err, stats) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({
+      booking_count: stats?.booking_count || 0,
+      total_revenue: stats?.total_revenue || 0,
+      total_amount: stats?.total_amount || 0
+    });
+  });
+});
+
+// POST /api/bookings - create a booking
+app.post('/api/bookings', (req, res) => {
+  const { diver_id, course_id, accommodation_id, check_in, check_out, total_amount, notes } = req.body;
+  const id = uuidv4();
+  const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
+
+  if (!diver_id) {
+    return res.status(400).json({ error: 'diver_id is required' });
+  }
+
+  const db = getDb();
+  db.run(
+    `INSERT INTO bookings (id, diver_id, course_id, accommodation_id, check_in, check_out, total_amount, invoice_number, payment_status, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', ?)`,
+    [id, diver_id, course_id || null, accommodation_id || null, check_in || null, check_out || null, total_amount || 0, invoiceNumber, notes || null],
+    (err) => {
+      if (err) {
+        db.close();
+        return res.status(500).json({ error: err.message });
+      }
+
+      db.get(`
+        SELECT 
+          b.id, b.diver_id, b.course_id, b.accommodation_id, b.check_in, b.check_out,
+          b.total_amount, b.invoice_number, b.payment_status, b.notes, b.created_at,
+          d.name as diver_name,
+          c.name as course_name, c.price as course_price,
+          a.name as accommodation_name, a.price_per_night, a.tier
+        FROM bookings b
+        LEFT JOIN divers d ON b.diver_id = d.id
+        LEFT JOIN courses c ON b.course_id = c.id
+        LEFT JOIN accommodations a ON b.accommodation_id = a.id
+        WHERE b.id = ?
+      `, [id], (err, booking) => {
+        db.close();
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({
+          id: booking.id,
+          diver_id: booking.diver_id,
+          course_id: booking.course_id,
+          accommodation_id: booking.accommodation_id,
+          check_in: booking.check_in,
+          check_out: booking.check_out,
+          total_amount: booking.total_amount,
+          invoice_number: booking.invoice_number,
+          payment_status: booking.payment_status,
+          notes: booking.notes,
+          created_at: booking.created_at,
+          divers: { name: booking.diver_name },
+          courses: { name: booking.course_name, price: booking.course_price },
+          accommodations: { name: booking.accommodation_name, price_per_night: booking.price_per_night, tier: booking.tier }
+        });
+      });
+    }
+  );
+});
+
+// PATCH /api/bookings/:id - update payment status
+app.patch('/api/bookings/:id', (req, res) => {
+  const { id } = req.params;
+  const { payment_status } = req.body;
+
+  const db = getDb();
+  db.run('UPDATE bookings SET payment_status = ? WHERE id = ?', [payment_status, id], (err) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ ok: true });
+  });
+});
+
+// DELETE /api/bookings/:id - delete a booking
+app.delete('/api/bookings/:id', (req, res) => {
+  const { id } = req.params;
+
+  const db = getDb();
+  db.run('DELETE FROM bookings WHERE id = ?', [id], (err) => {
+    db.close();
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ ok: true });
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

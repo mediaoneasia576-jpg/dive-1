@@ -52,6 +52,50 @@ export function initDb() {
           FOREIGN KEY(diver_id) REFERENCES divers(id) ON DELETE CASCADE,
           UNIQUE(group_id, diver_id)
         )
+      `);
+
+      // Courses table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS courses (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          price REAL DEFAULT 0,
+          duration_days INTEGER,
+          description TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Accommodations table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS accommodations (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          price_per_night REAL DEFAULT 0,
+          tier TEXT DEFAULT 'standard',
+          description TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Bookings table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS bookings (
+          id TEXT PRIMARY KEY,
+          diver_id TEXT NOT NULL,
+          course_id TEXT,
+          accommodation_id TEXT,
+          check_in TEXT,
+          check_out TEXT,
+          total_amount REAL DEFAULT 0,
+          invoice_number TEXT UNIQUE,
+          payment_status TEXT DEFAULT 'unpaid',
+          notes TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(diver_id) REFERENCES divers(id) ON DELETE CASCADE,
+          FOREIGN KEY(course_id) REFERENCES courses(id) ON DELETE SET NULL,
+          FOREIGN KEY(accommodation_id) REFERENCES accommodations(id) ON DELETE SET NULL
+        )
       `, (err) => {
         if (err) reject(err);
         else resolve();

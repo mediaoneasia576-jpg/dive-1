@@ -6,29 +6,42 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/integrations/api/client";
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [divers, setDivers] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [accommodations, setAccommodations] = useState<any[]>([]);
+  const [stats, setStats] = useState({ booking_count: 0, total_revenue: 0, total_amount: 0 });
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ diver_id: "", course_id: "", accommodation_id: "", check_in: "", check_out: "", total_amount: "0", notes: "" });
+  const [form, setForm] = useState({ diver_id: "", course_id: "", accommodation_id: "", check_in: "", check_out: "", notes: "" });
   const { toast } = useToast();
 
   const load = async () => {
-    const [b, d, c, a] = await Promise.all([
-      supabase.from("bookings").select("*, divers(name), courses(name, price), accommodations(name, price_per_night, tier)").order("created_at", { ascending: false }),
-      supabase.from("divers").select("id, name"),
-      supabase.from("courses").select("id, name, price"),
-      supabase.from("accommodations").select("id, name, price_per_night, tier"),
-    ]);
-    if (b.data) setBookings(b.data);
-    if (d.data) setDivers(d.data);
-    if (c.data) setCourses(c.data);
-    if (a.data) setAccommodations(a.data);
+    setLoading(true);
+    try {
+      const [b, d, c, a, s] = await Promise.all([
+        apiClient.bookings.list(),
+        apiClient.divers.list(),
+        apiClient.courses.list(),
+        apiClient.accommodations.list(),
+        apiClient.bookings.getLast30Days(),
+      ]);
+      setBookings(b);
+      setDivers(d);
+      setCourses(c);
+      setAccommodations(a);
+      setStats(s);
+    } catch (err) {
+      console.error('Failed to load bookings', err);
+      toast({ title: "Error", description: String(err), variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -48,33 +61,41 @@ export default function BookingsPage() {
   const handleSubmit = async () => {
     if (!form.diver_id) return;
     const total = calcTotal();
-    const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
-    const { error } = await supabase.from("bookings").insert({
-      diver_id: form.diver_id,
-      course_id: form.course_id || null,
-      accommodation_id: form.accommodation_id || null,
-      check_in: form.check_in || null,
-      check_out: form.check_out || null,
-      total_amount: total,
-      invoice_number: invoiceNumber,
-      payment_status: "unpaid",
-      notes: form.notes || null,
-    });
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    setForm({ diver_id: "", course_id: "", accommodation_id: "", check_in: "", check_out: "", total_amount: "0", notes: "" });
-    setOpen(false);
-    load();
+    try {
+      await apiClient.bookings.create({
+        diver_id: form.diver_id,
+        course_id: form.course_id || null,
+        accommodation_id: form.accommodation_id || null,
+        check_in: form.check_in || null,
+        check_out: form.check_out || null,
+        total_amount: total,
+        notes: form.notes || null,
+      });
+      setForm({ diver_id: "", course_id: "", accommodation_id: "", check_in: "", check_out: "", notes: "" });
+      setOpen(false);
+      load();
+    } catch (err) {
+      toast({ title: "Error", description: String(err), variant: "destructive" });
+    }
   };
 
   const togglePayment = async (id: string, current: string) => {
     const next = current === "paid" ? "unpaid" : "paid";
-    await supabase.from("bookings").update({ payment_status: next }).eq("id", id);
-    load();
+    try {
+      await apiClient.bookings.updateStatus(id, next);
+      load();
+    } catch (err) {
+      toast({ title: "Error", description: String(err), variant: "destructive" });
+    }
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("bookings").delete().eq("id", id);
-    load();
+    try {
+      await apiClient.bookings.delete(id);
+      load();
+    } catch (err) {
+      toast({ title: "Error", description: String(err), variant: "destructive" });
+    }
   };
 
   const statusColors: Record<string, string> = {
@@ -129,38 +150,72 @@ export default function BookingsPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Last 30 Days Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Bookings (Last 30 Days)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{stats.booking_count}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Revenue (Paid)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${stats.total_revenue.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Amount</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${stats.total_amount.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bookings Table */}
       <div className="bg-card rounded-lg border overflow-hidden">
-        <table className="data-table">
-          <thead>
-            <tr className="bg-muted/50">
-              <th>Invoice #</th><th>Diver</th><th>Course</th><th>Accommodation</th><th>Dates</th><th>Total</th><th>Status</th><th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {bookings.length === 0 ? (
-              <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">No bookings yet</td></tr>
-            ) : bookings.map((b) => (
-              <tr key={b.id} className="hover:bg-muted/30 transition-colors">
-                <td className="font-mono text-sm"><FileText className="h-3 w-3 inline mr-1" />{b.invoice_number || "—"}</td>
-                <td>{b.divers?.name || "—"}</td>
-                <td>{b.courses?.name || "—"}</td>
-                <td>{b.accommodations?.name || "—"}</td>
-                <td className="text-sm">{b.check_in || "—"} → {b.check_out || "—"}</td>
-                <td className="font-mono font-medium">${b.total_amount}</td>
-                <td>
-                  <Badge variant="outline" className={`cursor-pointer ${statusColors[b.payment_status]}`} onClick={() => togglePayment(b.id, b.payment_status)}>
-                    {b.payment_status}
-                  </Badge>
-                </td>
-                <td>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(b.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </td>
+        {loading ? (
+          <div className="p-8 text-center text-muted-foreground">Loading bookings…</div>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr className="bg-muted/50">
+                <th>Invoice #</th><th>Diver</th><th>Course</th><th>Accommodation</th><th>Dates</th><th>Total</th><th>Status</th><th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {bookings.length === 0 ? (
+                <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">No bookings yet</td></tr>
+              ) : bookings.map((b) => (
+                <tr key={b.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="font-mono text-sm"><FileText className="h-3 w-3 inline mr-1" />{b.invoice_number || "—"}</td>
+                  <td>{b.divers?.name || "—"}</td>
+                  <td>{b.courses?.name || "—"}</td>
+                  <td>{b.accommodations?.name || "—"}</td>
+                  <td className="text-sm">{b.check_in || "—"} → {b.check_out || "—"}</td>
+                  <td className="font-mono font-medium">${b.total_amount}</td>
+                  <td>
+                    <Badge variant="outline" className={`cursor-pointer ${statusColors[b.payment_status]}`} onClick={() => togglePayment(b.id, b.payment_status)}>
+                      {b.payment_status}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(b.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
