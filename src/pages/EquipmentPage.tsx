@@ -9,6 +9,7 @@ export default function EquipmentPage() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [edits, setEdits] = useState<Record<string, any>>({});
+  const [assignments, setAssignments] = useState<any[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -24,6 +25,18 @@ export default function EquipmentPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const loadAssignments = async () => {
+    try {
+      const data = await apiClient.rentalAssignments.list();
+      setAssignments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to load assignments', err);
+      setAssignments([]);
+    }
+  };
+
+  useEffect(() => { loadAssignments(); }, []);
 
   const getStatus = (it: any) => {
     if (typeof it.quantity_available_for_rent === 'number') {
@@ -72,9 +85,56 @@ export default function EquipmentPage() {
         await apiClient.equipment.create(ex);
       }
       await load();
+      await loadAssignments();
     } catch (err) {
       console.error('Failed to create examples', err);
       alert('Failed to add example items');
+    }
+  };
+
+  const rentedCountFor = (id: string) => {
+    return assignments.filter(a => a.equipment_id === id && a.status === 'active').reduce((s, a) => s + (a.quantity || 0), 0);
+  };
+
+  const handleCheckOut = async (it: any) => {
+    const max = it.quantity_available_for_rent ?? it.quantity_in_stock ?? 0;
+    const qStr = window.prompt(`Quantity to check out (max ${max}):`, '1');
+    if (!qStr) return;
+    const qty = Math.max(1, Number(qStr));
+    if (qty > max) { alert('Not enough available units'); return; }
+    const bookingId = window.prompt('Booking ID (optional):', '');
+    const checkIn = window.prompt('Check-in date (YYYY-MM-DD):', new Date().toISOString().slice(0,10));
+    const checkOut = window.prompt('Check-out date (YYYY-MM-DD):', new Date(Date.now()+24*60*60*1000).toISOString().slice(0,10));
+    try {
+      const payload: any = { equipment_id: it.id, quantity: qty, check_in: checkIn, check_out: checkOut };
+      if (bookingId) payload.booking_id = bookingId;
+      const res = await apiClient.rentalAssignments.create(payload);
+      // decrement available
+      const newAvail = (it.quantity_available_for_rent || 0) - qty;
+      await apiClient.equipment.update(it.id, { quantity_available_for_rent: Math.max(0, newAvail) });
+      await load();
+      await loadAssignments();
+      alert('Checked out');
+    } catch (err) {
+      console.error('Checkout failed', err);
+      alert('Failed to check out');
+    }
+  };
+
+  const handleReturnAssignment = async (assignment: any) => {
+    if (!confirm(`Return ${assignment.quantity} x ${assignment.equipment_name}?`)) return;
+    try {
+      await apiClient.rentalAssignments.delete(assignment.id);
+      // increment available on equipment
+      const eq = items.find(i => i.id === assignment.equipment_id);
+      const newAvail = (eq.quantity_available_for_rent || 0) + (assignment.quantity || 0);
+      await apiClient.equipment.update(assignment.equipment_id, { quantity_available_for_rent: newAvail });
+      await load();
+      await loadAssignments();
+      alert('Returned');
+    } catch (err) {
+      console.error('Return failed', err);
+      alert('Failed to return');
     }
   };
 

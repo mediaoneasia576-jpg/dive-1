@@ -96,6 +96,12 @@ export const apiClient = {
     delete: (id) => apiClient.request('DELETE', `/api/equipment/${id}`),
   },
 
+  rentalAssignments: {
+    list: (bookingId) => apiClient.request('GET', `/api/rental-assignments${bookingId ? `?booking_id=${bookingId}` : ''}`),
+    create: (payload) => apiClient.request('POST', '/api/rental-assignments', payload),
+    delete: (id) => apiClient.request('DELETE', `/api/rental-assignments/${id}`),
+  },
+
   transactions: {
     list: () => apiClient.request('GET', '/api/transactions'),
     get: (id) => apiClient.request('GET', `/api/transactions/${id}`),
