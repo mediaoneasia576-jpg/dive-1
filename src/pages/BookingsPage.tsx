@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/integrations/api/client";
 import { generateInvoicePDF, printInvoice } from "@/utils/invoiceGenerator";
-import { equipment, rentalAssignments } from "@/hooks/usePOS";
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -142,22 +141,7 @@ export default function BookingsPage() {
         toast({ title: "Success", description: "Booking created successfully" });
       }
 
-      // Save rental assignments
-      if (bookingId && selectedEquipment.length > 0) {
-        for (const eq of selectedEquipment) {
-          await rentalAssignments.create({
-            booking_id: bookingId,
-            equipment_id: eq.equipment_id,
-            quantity: eq.quantity,
-            check_in: form.check_in,
-            check_out: form.check_out,
-          });
-        }
-        toast({ title: "Success", description: `${selectedEquipment.length} equipment items assigned` });
-      }
-
       setOpen(false);
-      setSelectedEquipment([]);
       load();
     } catch (err) {
       toast({ title: "Error", description: String(err), variant: "destructive" });
