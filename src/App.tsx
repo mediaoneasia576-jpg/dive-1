@@ -17,6 +17,7 @@ import CoursesPage from "@/pages/CoursesPage";
 import BookingsPage from "@/pages/BookingsPage";
 import EmergencyPage from "@/pages/EmergencyPage";
 import AccommodationsPage from "@/pages/AccommodationsPage";
+import EquipmentPage from "@/pages/EquipmentPage";
 import NotFound from "./pages/NotFound";
 import TripsPage from "@/pages/TripsPage";
 import TripBooking from "@/pages/TripBooking";
@@ -50,6 +51,7 @@ function ProtectedRoutes() {
         <Route path="/boats" element={<BoatsPage />} />
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/bookings" element={<BookingsPage />} />
+        <Route path="/equipment" element={<EquipmentPage />} />
         {/* POS removed — inventory remains at /inventory */}
         <Route path="/trips" element={<TripsPage />} />
         <Route path="/trips/:id" element={<TripBooking />} />

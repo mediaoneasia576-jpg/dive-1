@@ -12,6 +12,7 @@ const links = [
   { to: "/boats", label: "Boats", icon: Ship },
   { to: "/courses", label: "Courses", icon: GraduationCap },
   { to: "/bookings", label: "Bookings & Invoices", icon: FileText },
+  { to: "/equipment", label: "Equipment", icon: ShoppingCart },
   // POS removed: keep inventory separate
   { to: "/accommodations", label: "Accommodations", icon: Home },
   { to: "/incidents", label: "Incidents", icon: AlertTriangle },
