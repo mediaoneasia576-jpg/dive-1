@@ -188,10 +188,30 @@ export default async (req, context) => {
             notes: notes || null,
           },
         ])
-        .select()
+        .select('*, divers(name), courses(name, price), groups(name, days), accommodations(name, price_per_night, tier)')
         .single();
       if (error) throw error;
-      return sendJson(201, data);
+      
+      // Format response to match expected structure
+      const formatted = {
+        id: data.id,
+        diver_id: data.diver_id,
+        course_id: data.course_id,
+        group_id: data.group_id,
+        accommodation_id: data.accommodation_id,
+        check_in: data.check_in,
+        check_out: data.check_out,
+        total_amount: data.total_amount,
+        invoice_number: data.invoice_number,
+        payment_status: data.payment_status,
+        notes: data.notes,
+        created_at: data.created_at,
+        divers: data.divers ? { name: data.divers.name } : { name: null },
+        courses: data.courses ? { name: data.courses.name, price: data.courses.price } : { name: null, price: null },
+        groups: data.groups ? { name: data.groups.name, days: data.groups.days } : { name: null, days: null },
+        accommodations: data.accommodations ? { name: data.accommodations.name, price_per_night: data.accommodations.price_per_night, tier: data.accommodations.tier } : { name: null, price_per_night: null, tier: null }
+      };
+      return sendJson(201, formatted);
     }
 
     // PUT /api/bookings/:id
@@ -222,10 +242,30 @@ export default async (req, context) => {
           notes: notes || null,
         })
         .eq('id', id)
-        .select()
+        .select('*, divers(name), courses(name, price), groups(name, days), accommodations(name, price_per_night, tier)')
         .single();
       if (error) throw error;
-      return sendJson(200, data);
+      
+      // Format response to match expected structure
+      const formatted = {
+        id: data.id,
+        diver_id: data.diver_id,
+        course_id: data.course_id,
+        group_id: data.group_id,
+        accommodation_id: data.accommodation_id,
+        check_in: data.check_in,
+        check_out: data.check_out,
+        total_amount: data.total_amount,
+        invoice_number: data.invoice_number,
+        payment_status: data.payment_status,
+        notes: data.notes,
+        created_at: data.created_at,
+        divers: data.divers ? { name: data.divers.name } : { name: null },
+        courses: data.courses ? { name: data.courses.name, price: data.courses.price } : { name: null, price: null },
+        groups: data.groups ? { name: data.groups.name, days: data.groups.days } : { name: null, days: null },
+        accommodations: data.accommodations ? { name: data.accommodations.name, price_per_night: data.accommodations.price_per_night, tier: data.accommodations.tier } : { name: null, price_per_night: null, tier: null }
+      };
+      return sendJson(200, formatted);
     }
 
     // GET /api/courses
