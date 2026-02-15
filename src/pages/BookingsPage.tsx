@@ -62,9 +62,22 @@ export default function BookingsPage() {
     const course = courses.find((c) => c.id === form.course_id);
     if (course) total += Number(course.price);
     const acc = accommodations.find((a) => a.id === form.accommodation_id);
-    if (acc && form.check_in && form.check_out) {
-      const nights = Math.max(1, Math.ceil((new Date(form.check_out).getTime() - new Date(form.check_in).getTime()) / 86400000));
+    const nights = (form.check_in && form.check_out)
+      ? Math.max(1, Math.ceil((new Date(form.check_out).getTime() - new Date(form.check_in).getTime()) / 86400000))
+      : 0;
+    if (acc && nights > 0) {
       total += Number(acc.price_per_night) * nights;
+    }
+
+    // Equipment rental totals (price per day * quantity * nights)
+    if (selectedEquipment && selectedEquipment.length > 0) {
+      const equipmentTotal = selectedEquipment.reduce((sum, sel) => {
+        const item = equipmentList.find((e) => e.id === sel.equipment_id);
+        if (!item) return sum;
+        const dayCount = nights > 0 ? nights : 1;
+        return sum + (Number(item.rent_price_per_day || 0) * Number(sel.quantity || 0) * dayCount);
+      }, 0);
+      total += equipmentTotal;
     }
     return total;
   };
