@@ -28,7 +28,7 @@ import HiraPage from "@/pages/HiraPage";
 import IncidentsPage from "@/pages/IncidentsPage";
 import DebugPage from "@/pages/DebugPage";
 import GroupsPage from "@/pages/GroupsPage";
-import POSPage from "@/pages/POSPage";
+// POSPage removed
 
 const queryClient = new QueryClient();
 
@@ -50,7 +50,7 @@ function ProtectedRoutes() {
         <Route path="/boats" element={<BoatsPage />} />
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/bookings" element={<BookingsPage />} />
-        <Route path="/pos" element={<POSPage />} />
+        {/* POS removed — inventory remains at /inventory */}
         <Route path="/trips" element={<TripsPage />} />
         <Route path="/trips/:id" element={<TripBooking />} />
         <Route path="/trips/:id/book" element={<TripBooking />} />

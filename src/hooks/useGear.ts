@@ -35,9 +35,15 @@ export async function createGearStock(payload: { gear_item_id: string; serial_nu
   return { data, error };
 }
 
+export async function updateGearStock(id: string, payload: { status?: string; serial_number?: string; notes?: string; last_maintenance_at?: string }) {
+  const { data, error } = await supabase.from('gear_stock').update(payload).eq('id', id).select().single();
+  return { data, error };
+}
+
 export default {
   useGearItems,
   createGearItem,
   getGearStock,
   createGearStock,
+  updateGearStock,
 };
