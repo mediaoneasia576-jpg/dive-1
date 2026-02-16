@@ -229,12 +229,12 @@ export default function CreateDiveTripPage() {
                     Boat
                     <Settings className="w-4 h-4 cursor-pointer hover:text-gray-600" />
                   </Label>
-                  <Select value={form.boat} onValueChange={(value) => setForm({ ...form, boat: value })}>
+                  <Select value={form.boat || 'no-boat'} onValueChange={(value) => setForm({ ...form, boat: value === 'no-boat' ? '' : value })}>
                     <SelectTrigger className="h-12">
                       <SelectValue placeholder="No Boat" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Boat</SelectItem>
+                      <SelectItem value="no-boat">No Boat</SelectItem>
                       {boats.map((boat: Boat) => (
                         <SelectItem key={boat.id} value={boat.id}>
                           {boat.name || 'Unnamed Boat'}
@@ -249,12 +249,12 @@ export default function CreateDiveTripPage() {
               <div className="grid grid-cols-2 gap-8">
                 <div>
                   <Label className="text-base font-semibold mb-2 block">Captain</Label>
-                  <Select value={form.captain} onValueChange={(value) => setForm({ ...form, captain: value })}>
+                  <Select value={form.captain || 'select-captain'} onValueChange={(value) => setForm({ ...form, captain: value === 'select-captain' ? '' : value })}>
                     <SelectTrigger className="h-12">
                       <SelectValue placeholder="Please select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Please select</SelectItem>
+                      <SelectItem value="select-captain">Please select</SelectItem>
                       {instructors.map((instructor: Instructor) => (
                         <SelectItem key={instructor.id} value={instructor.id}>
                           {instructor.name || 'Unnamed Instructor'}
