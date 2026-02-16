@@ -111,6 +111,7 @@ export default function AppSidebar() {
         </DropdownMenu>
 
         <div className="text-xs text-sidebar-foreground/60 text-center">
+          <div className="font-semibold">ONE MEDIA ASIA Co,LTD</div>
           <div>Asia Booking for dive pros V.2.0</div>
           <div className="mt-1">Copyright PETER GREANEY</div>
           <div>@ ONEMEDIA.ASIA</div>
