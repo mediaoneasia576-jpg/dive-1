@@ -43,6 +43,7 @@ import FinanceSettingsPage from "@/pages/FinanceSettingsPage";
 import POSPage from "@/pages/POSPage";
 import EquipmentMaintenancePage from "@/pages/EquipmentMaintenancePage";
 import WeChatIntegrationPage from "@/pages/WeChatIntegrationPage";
+import WhatsAppIntegrationPage from "@/pages/WhatsAppIntegrationPage";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ function ProtectedRoutes() {
         <Route path="/equipment" element={<EquipmentPage />} />
         <Route path="/equipment-maintenance" element={<EquipmentMaintenancePage />} />
         <Route path="/wechat-integration" element={<WeChatIntegrationPage />} />
+        <Route path="/whatsapp-integration" element={<WhatsAppIntegrationPage />} />
         {/* POS removed — inventory remains at /inventory */}
         <Route path="/trips" element={<TripsPage />} />
         <Route path="/trips/:id" element={<TripBooking />} />

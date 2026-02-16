@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Anchor, LayoutDashboard, BookOpen, Users, MapPin, GraduationCap, Ship, UserCheck, FileText, AlertTriangle, Home, LogOut, ShoppingCart, Calendar, Wrench, MessageCircle } from "lucide-react";
+import { Anchor, LayoutDashboard, BookOpen, Users, MapPin, GraduationCap, Ship, UserCheck, FileText, AlertTriangle, Home, LogOut, ShoppingCart, Calendar, Wrench, MessageCircle, Phone } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +16,7 @@ const mainLinks = [
   { to: "/equipment", label: "Equipment", icon: ShoppingCart },
   { to: "/equipment-maintenance", label: "Equipment Rent-Maintenance", icon: Wrench },
   { to: "/wechat-integration", label: "WeChat Integration", icon: MessageCircle },
+  { to: "/whatsapp-integration", label: "WhatsApp Integration", icon: Phone },
   { to: "/accommodations", label: "Accommodations", icon: Home },
   { to: "/incidents", label: "Incidents", icon: AlertTriangle },
   { to: "/groups", label: "Groups", icon: UserCheck },
