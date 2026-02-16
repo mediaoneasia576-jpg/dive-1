@@ -1,10 +1,21 @@
 import { NavLink } from "react-router-dom";
-import { Anchor, LayoutDashboard, BookOpen, Users, MapPin, GraduationCap, Ship, UserCheck, FileText, AlertTriangle, Home, LogOut, ShoppingCart, Calendar, Wrench, MessageCircle, Phone } from "lucide-react";
+import { Anchor, LayoutDashboard, BookOpen, Users, MapPin, GraduationCap, Ship, UserCheck, FileText, AlertTriangle, Home, LogOut, ShoppingCart, Calendar, Wrench, MessageCircle, Phone, Download, User, Settings, HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const mainLinks = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/trips", label: "Trips", icon: Calendar },
   { to: "/calendar", label: "Calendar", icon: Calendar },
   { to: "/dive-logs", label: "Dive Logs", icon: BookOpen },
   { to: "/divers", label: "Divers", icon: Users },
@@ -13,18 +24,19 @@ const mainLinks = [
   { to: "/boats", label: "Boats", icon: Ship },
   { to: "/courses", label: "Courses", icon: GraduationCap },
   { to: "/bookings", label: "Bookings & Invoices", icon: FileText },
-  { to: "/equipment-maintenance", label: "Equipment Rent-Maintenance", icon: Wrench },
-  { to: "/wechat-integration", label: "WeChat Integration", icon: MessageCircle },
-  { to: "/whatsapp-integration", label: "WhatsApp Integration", icon: Phone },
+  { to: "/equipment-maintenance", label: "Equipment", icon: Wrench },
+  { to: "/forms-elearning", label: "Forms & E-learning", icon: Download },
   { to: "/accommodations", label: "Accommodations", icon: Home },
   { to: "/incidents", label: "Incidents", icon: AlertTriangle },
   { to: "/groups", label: "Groups", icon: UserCheck },
   { to: "/emergency", label: "Emergency", icon: AlertTriangle },
+  { to: "/wechat-integration", label: "WeChat", icon: MessageCircle },
+  { to: "/whatsapp-integration", label: "WhatsApp", icon: Phone },
 ];
 
 
 export default function AppSidebar() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
 
   return (
     <aside className="w-64 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border">
@@ -52,11 +64,56 @@ export default function AppSidebar() {
         ))}
 
       </nav>
-      <div className="p-4 border-t border-sidebar-border">
-        <Button variant="ghost" size="sm" className="w-full justify-start text-sidebar-foreground/60" onClick={signOut}>
-          <LogOut className="h-4 w-4 mr-2" />Sign Out
-        </Button>
-        <p className="text-xs text-sidebar-foreground/60 mt-2">DiveAdmin v2.0</p>
+      <div className="p-4 border-t border-sidebar-border space-y-3">
+        {/* User Profile Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start text-sidebar-foreground/60 h-auto p-3">
+              <div className="flex items-center gap-3 w-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user?.avatar} />
+                  <AvatarFallback>
+                    {user?.name?.charAt(0) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-left">
+                  <div className="text-sm font-medium text-sidebar-foreground">
+                    {user?.name || 'User'}
+                  </div>
+                  <div className="text-xs text-sidebar-foreground/60">
+                    {user?.email || 'user@example.com'}
+                  </div>
+                </div>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="start">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <HelpCircle className="mr-2 h-4 w-4" />
+              <span>Help & Support</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sign Out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="flex items-center justify-between text-xs text-sidebar-foreground/60">
+          <span>DiveAdmin v2.0</span>
+          <Badge variant="secondary" className="text-xs">PRO</Badge>
+        </div>
       </div>
     </aside>
   );
