@@ -111,10 +111,16 @@ export default function EquipmentMaintenancePage() {
 
   const addExamples = async () => {
     const examples = [
-      { name: 'BCD (Buoyancy Compensator)', category: 'Fins', price: 199.99, can_rent: true, rent_price_per_day: 10, quantity_in_stock: 5, quantity_available_for_rent: 5 },
-      { name: 'Regulator Set', category: 'Shoe', price: 349.99, can_rent: true, rent_price_per_day: 15, quantity_in_stock: 3, quantity_available_for_rent: 3 },
-      { name: 'Wetsuit (3mm)', category: 'BCD', price: 79.99, can_rent: true, rent_price_per_day: 5, quantity_in_stock: 6, quantity_available_for_rent: 6 },
-      { name: 'Dive Computer', category: 'Wetsuit', price: 499.99, can_rent: false, rent_price_per_day: 0, quantity_in_stock: 2, quantity_available_for_rent: 0 },
+      { name: 'Scuba Fins', category: 'Fins', price: 89.99, can_rent: true, rent_price_per_day: 8, quantity_in_stock: 8, quantity_available_for_rent: 8 },
+      { name: 'Dive Boots', category: 'Shoe', price: 49.99, can_rent: true, rent_price_per_day: 5, quantity_in_stock: 6, quantity_available_for_rent: 6 },
+      { name: 'BCD Jacket', category: 'BCD', price: 299.99, can_rent: true, rent_price_per_day: 15, quantity_in_stock: 4, quantity_available_for_rent: 4 },
+      { name: 'Wetsuit 3mm', category: 'Wetsuit', price: 129.99, can_rent: true, rent_price_per_day: 10, quantity_in_stock: 5, quantity_available_for_rent: 5 },
+      { name: 'Dive Computer', category: 'Computer', price: 399.99, can_rent: true, rent_price_per_day: 20, quantity_in_stock: 3, quantity_available_for_rent: 3 },
+      { name: 'Dive Mask', category: 'Mask', price: 59.99, can_rent: true, rent_price_per_day: 4, quantity_in_stock: 12, quantity_available_for_rent: 12 },
+      { name: 'Mask & Snorkel Set', category: 'Fins', price: 39.99, can_rent: true, rent_price_per_day: 4, quantity_in_stock: 10, quantity_available_for_rent: 10 },
+      { name: 'Regulator Set', category: 'Shoe', price: 349.99, can_rent: true, rent_price_per_day: 18, quantity_in_stock: 3, quantity_available_for_rent: 3 },
+      { name: 'Dive Knife', category: 'Fins', price: 29.99, can_rent: true, rent_price_per_day: 3, quantity_in_stock: 7, quantity_available_for_rent: 7 },
+      { name: 'Dive Light', category: 'Computer', price: 79.99, can_rent: true, rent_price_per_day: 6, quantity_in_stock: 4, quantity_available_for_rent: 4 },
     ];
     try {
       for (const ex of examples) {
@@ -172,7 +178,7 @@ export default function EquipmentMaintenancePage() {
     }
   };
 
-  const categories = ['All', 'Fins', 'Shoe', 'BCD', 'Wetsuit'];
+  const categories = ['All', 'Fins', 'Shoe', 'BCD', 'Wetsuit', 'Computer', 'Mask'];
   
   const filteredItems = items.filter(item => {
     const matchesFilter = filter === 'All' || item.category === filter;

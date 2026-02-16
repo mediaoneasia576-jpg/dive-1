@@ -17,7 +17,6 @@ import CoursesPage from "@/pages/CoursesPage";
 import BookingsPage from "@/pages/BookingsPage";
 import EmergencyPage from "@/pages/EmergencyPage";
 import AccommodationsPage from "@/pages/AccommodationsPage";
-import EquipmentPage from "@/pages/EquipmentPage";
 import NotFound from "./pages/NotFound";
 import TripsPage from "@/pages/TripsPage";
 import TripBooking from "@/pages/TripBooking";

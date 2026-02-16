@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, List, Home, FileText, Users } from 'lucide-react';
 
 export default function ReportsPage() {
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 16)); // February 2026
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 1)); // February 2026, start from 1st
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
 
   const getDaysInMonth = (date: Date) => {
@@ -164,22 +164,22 @@ export default function ReportsPage() {
                 return (
                   <div 
                     key={index}
-                    className={`min-h-[80px] p-2 border-r border-b border-gray-200 ${
+                    className={`min-h-[120px] p-3 border-r border-b border-gray-200 ${
                       isToday ? 'bg-blue-50' : ''
                     } ${!day ? 'bg-gray-50' : 'bg-white hover:bg-gray-50'}`}
                   >
                     {day && (
                       <>
-                        <div className={`text-sm font-medium mb-2 ${
+                        <div className={`text-sm font-medium mb-3 ${
                           isToday ? 'text-blue-600 font-bold' : 'text-gray-900'
                         }`}>
                           {day}
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {dayTrips.map((trip, tripIndex) => (
                             <div 
                               key={tripIndex}
-                              className="bg-blue-100 border border-blue-200 rounded p-1 text-xs"
+                              className="bg-blue-100 border border-blue-200 rounded p-2 text-xs"
                             >
                               <div className="font-medium text-blue-800">
                                 {trip.time} ({trip.count})
