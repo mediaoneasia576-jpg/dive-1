@@ -161,8 +161,8 @@ export default function EquipmentPage() {
     <div>
       <div className="page-header flex items-center justify-between mb-4">
         <div>
-          <h1 className="page-title">Equipment</h1>
-          <p className="page-description">Inventory and rental status. Edit prices inline.</p>
+          <h1 className="page-title">Equipment Inventory and Prices & Availability</h1>
+          <p className="page-description">Manage equipment inventory, pricing, and availability status</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={addExamples} variant="outline"><Plus className="mr-2 h-4 w-4" />Add Example Items</Button>

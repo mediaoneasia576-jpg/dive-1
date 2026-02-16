@@ -41,7 +41,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import AgentsPage from "@/pages/AgentsPage";
 import FinanceSettingsPage from "@/pages/FinanceSettingsPage";
 import POSPage from "@/pages/POSPage";
-// POSPage removed
+import EquipmentMaintenancePage from "@/pages/EquipmentMaintenancePage";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +64,7 @@ function ProtectedRoutes() {
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/bookings" element={<BookingsPage />} />
         <Route path="/equipment" element={<EquipmentPage />} />
+        <Route path="/equipment-maintenance" element={<EquipmentMaintenancePage />} />
         {/* POS removed — inventory remains at /inventory */}
         <Route path="/trips" element={<TripsPage />} />
         <Route path="/trips/:id" element={<TripBooking />} />
