@@ -13,9 +13,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+interface ExtendedUser {
+  id?: string;
+  avatar?: string;
+  name?: string;
+  email?: string;
+}
+
 const mainLinks = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/trips", label: "Trips", icon: Calendar },
+  { to: "/trips", label: "Calendar Trips", icon: Calendar },
   { to: "/calendar", label: "Calendar", icon: Calendar },
   { to: "/dive-logs", label: "Dive Logs", icon: BookOpen },
   { to: "/divers", label: "Divers", icon: Users },
@@ -71,17 +78,17 @@ export default function AppSidebar() {
             <Button variant="ghost" className="w-full justify-start text-sidebar-foreground/60 h-auto p-3">
               <div className="flex items-center gap-3 w-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.avatar} />
+                  <AvatarImage src={(user as ExtendedUser)?.avatar} />
                   <AvatarFallback>
-                    {user?.name?.charAt(0) || 'U'}
+                    {(user as ExtendedUser)?.name?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-left">
                   <div className="text-sm font-medium text-sidebar-foreground">
-                    {user?.name || 'User'}
+                    {(user as ExtendedUser)?.name || 'User'}
                   </div>
                   <div className="text-xs text-sidebar-foreground/60">
-                    {user?.email || 'user@example.com'}
+                    {(user as ExtendedUser)?.email || 'user@example.com'}
                   </div>
                 </div>
               </div>

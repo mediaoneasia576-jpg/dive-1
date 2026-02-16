@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -17,10 +17,7 @@ import {
   UserCheck,
   MessageSquare, 
   Phone, 
-  Settings,
-  CheckCircle,
-  AlertTriangle,
-  Info
+  Settings
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, eachWeekOfInterval } from 'date-fns';
 
@@ -33,23 +30,11 @@ interface DiveTrip {
   diver_names?: string[];
 }
 
-export default function TripsPage() {
+export default function CalendarTripsAndDatesPage() {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 16)); // February 2026
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
-  const [activeTab, setActiveTab] = useState('calendar');
-
-  // WhatsApp integration stats
-  const integrationStats = {
-    totalDivers: 1247,
-    whatsappDivers: 234,
-    autoImportRate: 82,
-    avgConfidence: 88,
-    monthlyGrowth: 31,
-    responseTime: '1.8 min',
-    clickToChatClicks: 1456,
-    messageTemplates: 12,
-  };
 
   // Sample trip data matching the image
   const trips: DiveTrip[] = [
@@ -148,9 +133,9 @@ export default function TripsPage() {
       {/* Header with title and badges */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Trips & WhatsApp Integration</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Calendar Trips and Dates</h1>
           <p className="text-muted-foreground">
-            Manage dive trips and WhatsApp-based diver communication
+            Manage dive trips, schedules, and WhatsApp communication
           </p>
         </div>
         <div className="flex gap-2">
@@ -165,62 +150,178 @@ export default function TripsPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="calendar">Calendar</TabsTrigger>
-          <TabsTrigger value="whatsapp-overview">WhatsApp Overview</TabsTrigger>
-          <TabsTrigger value="parser">Message Parser</TabsTrigger>
-          <TabsTrigger value="autoimport">Auto-Import</TabsTrigger>
-          <TabsTrigger value="chatlinks">Chat Links</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="calendar" className="space-y-6">
-      {/* Header with navigation and action buttons */}
+      {/* WhatsApp Section at Top */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={goToToday}>
-                Today
-              </Button>
-              <h2 className="text-xl font-semibold">
-                {format(currentDate, 'MMMM yyyy')}
-              </h2>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              <Button variant="default" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Dive Trip
-              </Button>
-              <Button variant="outline" size="sm">
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                Trip Schedules
-              </Button>
-              <Button variant="outline" size="sm">
-                <FileText className="h-4 w-4 mr-2" />
-                Daily Summary
-              </Button>
-              <Button variant="outline" size="sm">
-                <Users className="h-4 w-4 mr-2" />
-                Dive Trips & Accommodation
-              </Button>
-              <Button variant="outline" size="sm">
-                <FileText className="h-4 w-4 mr-2" />
-                Reports
-              </Button>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            WhatsApp Quick Actions
+          </CardTitle>
         </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="default" size="sm" onClick={() => navigate('/whatsapp-integration')}>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              WhatsApp Overview
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/whatsapp-parser')}>
+              <Settings className="h-4 w-4 mr-2" />
+              Message Parser
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/whatsapp-autoimport')}>
+              <Users className="h-4 w-4 mr-2" />
+              Auto-Import
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/whatsapp-chatlinks')}>
+              <Phone className="h-4 w-4 mr-2" />
+              Chat Links
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/whatsapp-settings')}>
+              <Settings className="h-4 w-4 mr-2" />
+              WhatsApp Settings
+            </Button>
+          </div>
+        </CardContent>
       </Card>
+
+      {/* Trip Management Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Trip Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="default" size="sm" onClick={() => navigate('/create-schedule')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Dive Trip
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/schedules')}>
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              Trip Schedules
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/daily-summary')}>
+              <FileText className="h-4 w-4 mr-2" />
+              Daily Summary
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/trips-accommodation')}>
+              <Users className="h-4 w-4 mr-2" />
+              Dive Trips & Accommodation
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/view-trips')}>
+              <List className="h-4 w-4 mr-2" />
+              View Trips
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/reports')}>
+              <FileText className="h-4 w-4 mr-2" />
+              Reports
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* View Trips Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <List className="h-5 w-5" />
+            Upcoming Dive Trips
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {trips.map((trip) => (
+              <div key={trip.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <h4 className="font-semibold">{trip.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(trip.start_at), 'MMMM dd, yyyy - h:mm a')}
+                      </p>
+                      {trip.location && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {trip.location}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">{trip.diver_count || 1}</span>
+                      <span className="text-sm text-muted-foreground">divers</span>
+                    </div>
+                    {trip.diver_names && trip.diver_names.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {trip.diver_names.slice(0, 2).join(', ')}
+                        {trip.diver_names.length > 2 && ` +${trip.diver_names.length - 2} more`}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/trip-details/${trip.id}`)}>
+                      View Details
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/edit-trip/${trip.id}`)}>
+                      Edit
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Calendar Section */}
+      <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={goToToday}>
+                    Today
+                  </Button>
+                  <h2 className="text-xl font-semibold">
+                    {format(currentDate, 'MMMM yyyy')}
+                  </h2>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="default" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Dive Trip
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <CalendarIcon className="h-4 w-4 mr-2" />
+                    Trip Schedules
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Daily Summary
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Users className="h-4 w-4 mr-2" />
+                    Dive Trips & Accommodation
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Reports
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
 
       {/* Calendar */}
       <Card>
@@ -322,341 +423,6 @@ export default function TripsPage() {
           </div>
         </CardContent>
       </Card>
-        </TabsContent>
-
-        <TabsContent value="whatsapp-overview" className="space-y-6">
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Divers</p>
-                    <p className="text-2xl font-bold">{integrationStats.totalDivers}</p>
-                  </div>
-                  <Users className="h-8 w-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">WhatsApp Divers</p>
-                    <p className="text-2xl font-bold">{integrationStats.whatsappDivers}</p>
-                  </div>
-                  <MessageSquare className="h-8 w-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Auto-Import Rate</p>
-                    <p className="text-2xl font-bold">{integrationStats.autoImportRate}%</p>
-                  </div>
-                  <CheckCircle className="h-8 w-8 text-purple-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Avg Confidence</p>
-                    <p className="text-2xl font-bold">{integrationStats.avgConfidence}%</p>
-                  </div>
-                  <AlertTriangle className="h-8 w-8 text-orange-600" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Features Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="h-5 w-5" />
-                WhatsApp Features
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                <div>
-                  <h4 className="font-medium">Enhanced Message Parsing</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Advanced parsing for WhatsApp's conversational format and international phone numbers
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                <div>
-                  <h4 className="font-medium">Auto-Reply System</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Intelligent responses based on message content and confidence scores
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                <div>
-                  <h4 className="font-medium">Click-to-Chat Links</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Generate direct chat links for website and marketing materials
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="parser" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Message Parser</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>WhatsApp Message Parser - Extract diver information from WhatsApp messages automatically.</p>
-              <div className="mt-4">
-                <Button>Test Parser</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="autoimport" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Auto-Import Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Configure automatic import of WhatsApp messages into diver profiles.</p>
-              <div className="mt-4">
-                <Button>Configure Auto-Import</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="chatlinks" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Click-to-Chat Links</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Generate WhatsApp links that allow customers to start conversations with a single click.</p>
-              <div className="mt-4">
-                <Button>Generate Chat Links</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>WhatsApp Business Configuration</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">WhatsApp Business API Settings</h4>
-                <p className="text-sm text-muted-foreground">
-                  Configure your WhatsApp Business API credentials
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="phone-number-id" className="text-sm font-medium">Phone Number ID</label>
-                  <input 
-                    id="phone-number-id"
-                    type="text" 
-                    className="w-full p-2 border rounded-md"
-                    placeholder="1234567890"
-                    aria-label="Phone Number ID"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="whatsapp-business-id" className="text-sm font-medium">WhatsApp Business ID</label>
-                  <input 
-                    id="whatsapp-business-id"
-                    type="text" 
-                    className="w-full p-2 border rounded-md"
-                    placeholder="your-business@whatsapp"
-                    aria-label="WhatsApp Business ID"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="api-token" className="text-sm font-medium">API Token</label>
-                  <input 
-                    id="api-token"
-                    type="password" 
-                    className="w-full p-2 border rounded-md"
-                    placeholder="your_whatsapp_api_token"
-                    aria-label="WhatsApp API Token"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="webhook-url" className="text-sm font-medium">Webhook URL</label>
-                  <input 
-                    id="webhook-url"
-                    type="url" 
-                    className="w-full p-2 border rounded-md"
-                    value="https://your-domain.com/api/whatsapp/webhook"
-                    readOnly
-                    aria-label="Webhook URL for WhatsApp Business API"
-                    title="Webhook URL - This endpoint receives WhatsApp messages"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-medium">Message Templates</h4>
-                <p className="text-sm text-muted-foreground">
-                  Pre-approved templates for common responses
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-3 border rounded">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">Welcome Message</span>
-                    <Badge variant="outline">Active</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    "Hello! 👋 Thank you for contacting our dive center. How can we help you today?"
-                  </p>
-                </div>
-                <div className="p-3 border rounded">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">Booking Confirmation</span>
-                    <Badge variant="outline">Active</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    "Great! 🎉 Your dive trip has been confirmed. We'll send you details shortly."
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-medium">Welcome Instructions</h4>
-                <p className="text-sm text-muted-foreground">
-                  Set up automated welcome messages and instructions for new divers
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg bg-blue-50">
-                  <h5 className="font-medium mb-2">New Diver Welcome Sequence</h5>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold">1.</span>
-                      <div>
-                        <strong>Initial Welcome:</strong> Send welcome message immediately
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold">2.</span>
-                      <div>
-                        <strong>Instructions:</strong> Send dive center information and safety guidelines
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold">3.</span>
-                      <div>
-                        <strong>Next Steps:</strong> Guide them through booking process
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="welcome-title" className="text-sm font-medium">Welcome Title</label>
-                    <input 
-                      id="welcome-title"
-                      type="text" 
-                      className="w-full p-2 border rounded-md"
-                      placeholder="Welcome to ONE MEDIA ASIA Diving!"
-                      defaultValue="Welcome to ONE MEDIA ASIA Diving!"
-                      aria-label="Welcome message title"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="welcome-delay" className="text-sm font-medium">Send After (minutes)</label>
-                    <input 
-                      id="welcome-delay"
-                      type="number" 
-                      className="w-full p-2 border rounded-md"
-                      placeholder="5"
-                      defaultValue="5"
-                      aria-label="Delay before sending welcome message"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="welcome-instructions" className="text-sm font-medium">Welcome Instructions</label>
-                  <textarea 
-                    id="welcome-instructions"
-                    className="w-full p-2 border rounded-md h-32"
-                    placeholder="Enter your welcome instructions for new divers..."
-                    defaultValue="Welcome to ONE MEDIA ASIA Diving! 🤿
-
-We're excited to help you explore the underwater world. Here's what you need to know:
-
-📍 Location: Our dive center is located at [Address]
-⏰ Hours: [Operating Hours]
-📞 Emergency: [Emergency Contact]
-
-What to bring:
-• Swimsuit and towel
-• Sunscreen
-• Water bottle
-• Certification card (if certified)
-
-Next steps:
-1. Choose your dive trip
-2. Complete medical form
-3. Confirm booking
-4. Get ready for adventure!
-
-Reply 'BOOK' to see available trips or 'HELP' for more information."
-                    aria-label="Welcome instructions for new divers"
-                  />
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" defaultChecked />
-                    <span className="text-sm">Enable welcome sequence</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" defaultChecked />
-                    <span className="text-sm">Send safety guidelines</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" />
-                    <span className="text-sm">Include promotional offers</span>
-                  </label>
-                </div>
-              </div>
-
-              <Button className="w-full">
-                Save WhatsApp Configuration
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
