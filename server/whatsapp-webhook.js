@@ -1,43 +1,59 @@
-const crypto = require('crypto');
-const express = require('express');
-const router = express.Router();
+import crypto from 'crypto';
+import express from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import { getDb } from './db.js';
 
-// WhatsApp webhook endpoint
+export const router = express.Router();
+
+// Meta webhook verification endpoint
+router.get('/whatsapp/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+    return res.status(200).send(challenge);
+  }
+
+  return res.sendStatus(403);
+});
+
+// WhatsApp webhook events endpoint
 router.post('/whatsapp/webhook', async (req, res) => {
   try {
-    // Verify webhook (for initial setup)
-    if (req.query['hub.verify_token'] === process.env.WHATSAPP_VERIFY_TOKEN) {
-      return res.status(200).send(req.query['hub.challenge']);
-    }
-
     const data = req.body;
     
     if (!data || !data.object) {
       return res.status(400).json({ error: 'No data received' });
     }
 
-    // Process WhatsApp messages
-    for (const entry of data.entry) {
-      for (const change of entry.changes) {
-        if (change.field === 'messages') {
-          for (const message of change.value.messages) {
-            if (message.type === 'text') {
-              const processedData = processWhatsAppMessage(message);
-              
-              // Auto-import if enabled and confidence is high
-              if (processedData && processedData.confidence >= 75) {
-                await autoImportDiver(processedData, req.db);
-              }
+    const db = getDb();
+    try {
+      // Process WhatsApp messages
+      for (const entry of data.entry || []) {
+        for (const change of entry.changes || []) {
+          if (change.field === 'messages') {
+            for (const message of (change.value && change.value.messages) || []) {
+              if (message && message.type === 'text') {
+                const processedData = processWhatsAppMessage(message);
 
-              // Send auto-reply if enabled
-              if (process.env.WHATSAPP_AUTO_REPLY === 'true') {
-                const replyMessage = generateWhatsAppReply(message, processedData);
-                await sendWhatsAppReply(message.from, replyMessage);
+                // Auto-import if enabled and confidence is high
+                if (processedData && processedData.confidence >= 75) {
+                  await autoImportDiver(processedData, db);
+                }
+
+                // Send auto-reply if enabled
+                if (process.env.WHATSAPP_AUTO_REPLY === 'true') {
+                  const replyMessage = generateWhatsAppReply(message, processedData);
+                  await sendWhatsAppReply(message.from, replyMessage);
+                }
               }
             }
           }
         }
       }
+    } finally {
+      db.close();
     }
 
     res.status(200).send('EVENT_RECEIVED');
@@ -196,9 +212,17 @@ function processWhatsAppMessage(message) {
 async function autoImportDiver(data, db) {
   try {
     // Check for duplicates
-    const existingDivers = await db.all('SELECT * FROM divers WHERE email = ? OR phone = ? OR whatsapp_id = ?', 
-      [data.email, data.phone, data.whatsappId]);
-    
+    const existingDivers = await new Promise((resolve, reject) => {
+      db.all(
+        'SELECT id FROM divers WHERE email = ? OR phone = ? OR whatsapp_id = ?',
+        [data.email || null, data.phone || null, data.whatsappId || null],
+        (err, rows) => {
+          if (err) return reject(err);
+          resolve(rows || []);
+        }
+      );
+    });
+
     if (existingDivers.length > 0) {
       console.log('Duplicate diver found, skipping import');
       return;
@@ -220,22 +244,32 @@ async function autoImportDiver(data, db) {
       created_at: new Date().toISOString(),
     };
 
-    await db.run(`
-      INSERT INTO divers (name, first_name, last_name, email, phone, certification_level, medical_cleared, notes, source, whatsapp_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      payload.name,
-      payload.first_name,
-      payload.last_name,
-      payload.email,
-      payload.phone,
-      payload.certification_level,
-      payload.medical_cleared,
-      payload.notes,
-      payload.source,
-      payload.whatsapp_id,
-      payload.created_at
-    ]);
+    const id = uuidv4();
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO divers (id, name, first_name, last_name, email, phone, certification_level, medical_cleared, notes, source, whatsapp_id, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ,
+        [
+          id,
+          payload.name,
+          payload.first_name || null,
+          payload.last_name || null,
+          payload.email,
+          payload.phone || null,
+          payload.certification_level || null,
+          payload.medical_cleared,
+          payload.notes || null,
+          payload.source || null,
+          payload.whatsapp_id || null,
+          payload.created_at
+        ],
+        (err) => {
+          if (err) return reject(err);
+          resolve();
+        }
+      );
+    });
 
     console.log('Successfully imported diver from WhatsApp:', fullName);
     
@@ -283,4 +317,4 @@ function generateWhatsAppLink(phone, message = '') {
   return `https://wa.me/${encodedPhone}${message ? '?text=' + encodedMessage : ''}`;
 }
 
-module.exports = { router, generateWhatsAppLink };
+export { generateWhatsAppLink };

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 import { getDb, initDb } from './db.js';
+import { router as whatsappRouter } from './whatsapp-webhook.js';
 
 const app = express();
 
@@ -24,6 +25,8 @@ app.use(authMiddleware);
 app.get('/health', (req, res) => {
   res.json({ ok: true });
 });
+
+app.use(whatsappRouter);
 
 // GET /api/groups - list all groups with leader and members
 app.get('/api/groups', (req, res) => {

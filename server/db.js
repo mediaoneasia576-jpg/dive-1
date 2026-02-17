@@ -19,10 +19,15 @@ export function initDb() {
         CREATE TABLE IF NOT EXISTS divers (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
+          first_name TEXT,
+          last_name TEXT,
           email TEXT UNIQUE NOT NULL,
           phone TEXT,
           certification_level TEXT,
           medical_cleared INTEGER DEFAULT 1,
+          notes TEXT,
+          source TEXT,
+          whatsapp_id TEXT,
           waiver_signed INTEGER DEFAULT 0,
           waiver_signed_date TEXT,
           onboarding_completed INTEGER DEFAULT 0,
@@ -31,6 +36,25 @@ export function initDb() {
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
+
+      // Ensure new columns exist for older databases
+      db.all("PRAGMA table_info(divers)", (err, cols) => {
+        if (err) return;
+        const names = (cols || []).map(c => c.name);
+        const toAdd = [];
+        if (!names.includes('first_name')) toAdd.push(`ALTER TABLE divers ADD COLUMN first_name TEXT`);
+        if (!names.includes('last_name')) toAdd.push(`ALTER TABLE divers ADD COLUMN last_name TEXT`);
+        if (!names.includes('notes')) toAdd.push(`ALTER TABLE divers ADD COLUMN notes TEXT`);
+        if (!names.includes('source')) toAdd.push(`ALTER TABLE divers ADD COLUMN source TEXT`);
+        if (!names.includes('whatsapp_id')) toAdd.push(`ALTER TABLE divers ADD COLUMN whatsapp_id TEXT`);
+        toAdd.forEach(sql => {
+          db.run(sql, (err) => {
+            if (err) {
+              // ignore; column may already exist on some sqlite versions
+            }
+          });
+        });
+      });
 
       // Groups table
       db.run(`
